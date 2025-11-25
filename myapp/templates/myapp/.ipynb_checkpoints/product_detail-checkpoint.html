@@ -55,7 +55,7 @@
                         <table class="table table-borderless">
                             <tr>
                                 <th width="30%">Purchase Date:</th>
-                                <td>{{ product.purchase_date }}</td>
+                                <td>{{ product.purchase_date|date:"M d, Y"|default:"N/A" }}</td>
                             </tr>
                             <tr>
                                 <th>Price:</th>
@@ -67,7 +67,7 @@
                             </tr>
                             <tr>
                                 <th>Expiration Date:</th>
-                                <td>{{ product.expiration_date }}</td>
+                                <td>{{ product.expiration_date|date:"M d, Y"|default:"Not set" }}</td>
                             </tr>
                             <tr>
                                 <th>Usage Status:</th>
@@ -81,44 +81,42 @@
                     </div>
                 </div>
                 
-                {% if product.description or product.notes %}
+                {% if product.description %}
                 <div class="row mt-4">
-                    {% if product.description %}
-                    <div class="col-md-6">
+                    <div class="col-12">
                         <h5>Product Description</h5>
                         <p class="text-muted">{{ product.description|linebreaks }}</p>
                     </div>
-                    {% endif %}
-                    
-                    {% if product.notes %}
-                    <div class="col-md-6">
-                        <h5>Usage Notes</h5>
-                        <p class="text-muted">{{ product.notes|linebreaks }}</p>
-                    </div>
-                    {% endif %}
                 </div>
                 {% endif %}
                 
-                <!-- Expiry Status Information -->
-                <div class="alert alert-{% if product.exp_status == 'good' %}success{% elif product.exp_status == 'expired' %}danger{% else %}warning{% endif %} mt-4">
+                {% if product.notes %}
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h5>Usage Notes</h5>
+                        <p class="text-muted">{{ product.notes|linebreaks }}</p>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Expiry Status Information - 修复这个部分 -->
+                <div class="alert alert-{{ status_class }} mt-4">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h6 class="alert-heading mb-1">Expiry Status: {{ product.get_exp_status_display }}</h6>
+                            <h6 class="alert-heading mb-1">Expiry Status: {{ expiration_status|title }}</h6>
                             <p class="mb-0">
-                                {% if product.days_int < 0 %}
-                                This product expired {{ product.days_int|absolute_value}} days ago
+                                {% if days_until_expiration is not None %}
+                                    {% if days_until_expiration < 0 %}
+                                        Expired {{ days_until_expiration|abs }} days ago
+                                    {% else %}
+                                        {{ days_until_expiration }} days until expiration
+                                    {% endif %}
                                 {% else %}
-                                {{ product.days_int }} days until expiration
+                                    Expiration date not set
                                 {% endif %}
                             </p>
                         </div>
-                        {% if product.exp_status == 'expired' %}
-                        <i class="fas fa-exclamation-triangle fa-2x"></i>
-                        {% elif product.exp_status == 'urgent' %}
-                        <i class="fas fa-clock fa-2x"></i>
-                        {% else %}
-                        <i class="fas fa-check-circle fa-2x"></i>
-                        {% endif %}
+                        <i class="fas {{ status_icon }} fa-2x"></i>
                     </div>
                 </div>
             </div>

@@ -130,11 +130,44 @@ class CosmeticProductDetailView(LoginRequiredMixin, DetailView):
             raise Http404("产品不存在")
     
     def get_context_data(self, **kwargs):
-        """添加上下文数据"""
+        """添加上下文数据，包括天数计算和状态"""
         context = super().get_context_data(**kwargs)
-        # 添加调试信息
         product = self.get_object()
-        context['debug_product_id'] = product.id if product else 'None'
+        today = date.today()
+        
+        # 计算距离过期的天数
+        if product.expiration_date:
+            days_until_expiration = (product.expiration_date - today).days
+            context['days_until_expiration'] = days_until_expiration
+            
+            # 根据天数设置状态和样式
+            if days_until_expiration < 0:
+                context['expiration_status'] = 'expired'
+                context['status_class'] = 'danger'  # Bootstrap danger class for red
+                context['status_icon'] = 'fa-times-circle'
+                context['status_text'] = f'Expired {abs(days_until_expiration)} days ago'
+            elif days_until_expiration <= 7:
+                context['expiration_status'] = 'urgent'
+                context['status_class'] = 'warning'  # Bootstrap warning class for yellow
+                context['status_icon'] = 'fa-exclamation-triangle'
+                context['status_text'] = f'{days_until_expiration} days until expiration - URGENT'
+            elif days_until_expiration <= 30:
+                context['expiration_status'] = 'soon'
+                context['status_class'] = 'info'     # Bootstrap info class for blue
+                context['status_icon'] = 'fa-clock'
+                context['status_text'] = f'{days_until_expiration} days until expiration - SOON'
+            else:
+                context['expiration_status'] = 'good'
+                context['status_class'] = 'success'  # Bootstrap success class for green
+                context['status_icon'] = 'fa-check-circle'
+                context['status_text'] = f'{days_until_expiration} days until expiration - GOOD'
+        else:
+            context['days_until_expiration'] = None
+            context['expiration_status'] = 'unknown'
+            context['status_class'] = 'secondary'   # Bootstrap secondary class for gray
+            context['status_icon'] = 'fa-question-circle'
+            context['status_text'] = 'Expiration date not set'
+        
         return context
 
 class CosmeticProductCreateView(LoginRequiredMixin, CreateView):
