@@ -1,0 +1,109 @@
+/* Custom CSS Styles */
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    color: white;
+}
+
+.status-good { background-color: #28a745; }
+.status-soon { background-color: #ffc107; color: black; }
+.status-urgent { background-color: #fd7e14; }
+.status-expired { background-color: #dc3545; }
+.status-unknown { background-color: #6c757d; }
+
+.product-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+    height: 100%;
+    border: 1px solid #dee2e6;
+}
+
+.product-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.expiry-indicator {
+    height: 4px;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    border-radius: 4px 4px 0 0;
+}
+
+.expiry-good { background-color: #28a745; }
+.expiry-soon { background-color: #ffc107; }
+.expiry-urgent { background-color: #fd7e14; }
+.expiry-expired { background-color: #dc3545; }
+
+.stats-card {
+    border-left: 4px solid;
+    transition: transform 0.2s;
+}
+
+.stats-card:hover {
+    transform: scale(1.02);
+}
+
+.stats-card.good { border-left-color: #28a745; }
+.stats-card.soon { border-left-color: #ffc107; }
+.stats-card.urgent { border-left-color: #fd7e14; }
+.stats-card.expired { border-left-color: #dc3545; }
+
+.action-buttons .btn {
+    margin-right: 5px;
+    margin-bottom: 5px;
+}
+
+.table-actions {
+    white-space: nowrap;
+}
+
+/* Responsive Table */
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+    
+    .action-buttons .btn {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+}
+
+/* Loading Animation */
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Empty State Styling */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #6c757d;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+/* Form Styling */
+.required-field label:after {
+    content: " *";
+    color: #dc3545;
+}

@@ -1,0 +1,150 @@
+{% extends 'myapp/base.html' %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}Edit{% else %}Add{% endif %} Product - Cosmetic Management System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title mb-0">
+                    <i class="fas {% if form.instance.pk %}fa-edit{% else %}fa-plus{% endif %} me-2"></i>
+                    {% if form.instance.pk %}Edit Product{% else %}Add New Product{% endif %}
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <strong>Please correct the following errors:</strong>
+                        <ul class="mb-0">
+                            {% for field, errors in form.errors.items %}
+                                {% for error in errors %}
+                                <li>{{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <!-- Basic Information -->
+                            <div class="mb-3 required-field">
+                                <label for="{{ form.name.id_for_label }}" class="form-label">Product Name</label>
+                                {{ form.name }}
+                                {% if form.name.help_text %}
+                                <div class="form-text">{{ form.name.help_text }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3 required-field">
+                                <label for="{{ form.brand.id_for_label }}" class="form-label">Brand</label>
+                                {{ form.brand }}
+                            </div>
+                            
+                            <div class="mb-3 required-field">
+                                <label for="{{ form.category.id_for_label }}" class="form-label">Category</label>
+                                {{ form.category }}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.shade.id_for_label }}" class="form-label">Shade/Color</label>
+                                {{ form.shade }}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.capacity.id_for_label }}" class="form-label">Capacity</label>
+                                {{ form.capacity }}
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <!-- Purchase Information -->
+                            <div class="mb-3 required-field">
+                                <label for="{{ form.purchase_date.id_for_label }}" class="form-label">Purchase Date</label>
+                                {{ form.purchase_date }}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.price.id_for_label }}" class="form-label">Price</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    {{ form.price }}
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.purchase_location.id_for_label }}" class="form-label">Purchase Location</label>
+                                {{ form.purchase_location }}
+                            </div>
+                            
+                            <!-- Expiry Management -->
+                            <div class="mb-3 required-field">
+                                <label for="{{ form.expiration_date.id_for_label }}" class="form-label">Expiration Date</label>
+                                {{ form.expiration_date }}
+                                <div class="form-text">Please update expiration date after opening the product</div>
+                            </div>
+                            
+                            <div class="mb-3 required-field">
+                                <label for="{{ form.status.id_for_label }}" class="form-label">Usage Status</label>
+                                {{ form.status }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Additional Information -->
+                    <div class="mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">Product Description</label>
+                        {{ form.description }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.notes.id_for_label }}" class="form-label">Usage Notes</label>
+                        {{ form.notes }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.image.id_for_label }}" class="form-label">Product Image</label>
+                        {{ form.image }}
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'myapp:product_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i> Back to List
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i> 
+                            {% if form.instance.pk %}Update Product{% else %}Add Product{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set today as default purchase date
+    const purchaseDateField = document.getElementById('{{ form.purchase_date.id_for_label }}');
+    if (purchaseDateField && !purchaseDateField.value) {
+        const today = new Date().toISOString().split('T')[0];
+        purchaseDateField.value = today;
+    }
+    
+    // Set default expiration date to one year from now
+    const expirationDateField = document.getElementById('{{ form.expiration_date.id_for_label }}');
+    if (expirationDateField && !expirationDateField.value) {
+        const nextYear = new Date();
+        nextYear.setFullYear(nextYear.getFullYear() + 1);
+        expirationDateField.value = nextYear.toISOString().split('T')[0];
+    }
+});
+</script>
+{% endblock %}

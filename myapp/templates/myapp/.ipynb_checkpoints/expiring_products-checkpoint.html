@@ -1,0 +1,272 @@
+{% extends "myapp/base.html" %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Expiring Products - Cosmetic Management System{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-exclamation-triangle me-2"></i>Expiring Products</h1>
+        <a href="{% url 'myapp:product_list' %}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-1"></i> Back to All Products
+        </a>
+    </div>
+
+    <!-- 过期状态统计 -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card expired">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">Expired</h5>
+                            <h2 class="card-text">{{ expired_products.count }}</h2>
+                        </div>
+                        <div class="text-danger">
+                            <i class="fas fa-times-circle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card urgent">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">Urgent (≤7 days)</h5>
+                            <h2 class="card-text">{{ urgent_products.count }}</h2>
+                        </div>
+                        <div class="text-warning">
+                            <i class="fas fa-exclamation-triangle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card soon">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">Soon (8-30 days)</h5>
+                            <h2 class="card-text">{{ soon_products.count }}</h2>
+                        </div>
+                        <div class="text-warning">
+                            <i class="fas fa-clock fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card total">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">Total Checked</h5>
+                            <h2 class="card-text">{{ total_count }}</h2>
+                        </div>
+                        <div class="text-info">
+                            <i class="fas fa-list fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 已过期产品 -->
+    {% if expired_products %}
+    <div class="card mb-4">
+        <div class="card-header bg-danger text-white">
+            <h4 class="mb-0">
+                <i class="fas fa-skull-crossbones me-2"></i>Expired Products ({{ expired_products.count }})
+            </h4>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Product Name</th>
+                            <th>Brand</th>
+                            <th>Expiration Date</th>
+                            <th>Days Expired</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in expired_products %}
+                        <tr class="table-danger">
+                            <td>
+                                <strong>{{ product.name }}</strong>
+                                {% if product.shade %}
+                                <br><small class="text-muted">Shade: {{ product.shade }}</small>
+                                {% endif %}
+                            </td>
+                            <td>{{ product.brand.name }}</td>
+                            <td>{{ product.expiration_date }}</td>
+                            <td>
+                                <span class="text-danger">
+                                    {{ product.days_until_expiration|abs }} days ago
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-danger">EXPIRED</span>
+                            </td>
+                            <td>
+                                <a href="{% url 'myapp:product_detail' product.pk %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                                <a href="{% url 'myapp:product_edit' product.pk %}" class="btn btn-sm btn-outline-warning">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 紧急过期产品 (7天内) -->
+    {% if urgent_products %}
+    <div class="card mb-4">
+        <div class="card-header bg-warning text-dark">
+            <h4 class="mb-0">
+                <i class="fas fa-exclamation-triangle me-2"></i>Urgent - Expiring in 7 Days ({{ urgent_products.count }})
+            </h4>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Product Name</th>
+                            <th>Brand</th>
+                            <th>Expiration Date</th>
+                            <th>Days Left</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in urgent_products %}
+                        <tr class="table-warning">
+                            <td>
+                                <strong>{{ product.name }}</strong>
+                                {% if product.shade %}
+                                <br><small class="text-muted">Shade: {{ product.shade }}</small>
+                                {% endif %}
+                            </td>
+                            <td>{{ product.brand.name }}</td>
+                            <td>{{ product.expiration_date }}</td>
+                            <td>
+                                <span class="text-warning">
+                                    {{ product.days_until_expiration }} days
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-warning text-dark">URGENT</span>
+                            </td>
+                            <td>
+                                <a href="{% url 'myapp:product_detail' product.pk %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                                <a href="{% url 'myapp:product_edit' product.pk %}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 即将过期产品 (8-30天) -->
+    {% if soon_products %}
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+            <h4 class="mb-0">
+                <i class="fas fa-clock me-2"></i>Expiring Soon - 8 to 30 Days ({{ soon_products.count }})
+            </h4>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Product Name</th>
+                            <th>Brand</th>
+                            <th>Expiration Date</th>
+                            <th>Days Left</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in soon_products %}
+                        <tr class="table-info">
+                            <td>
+                                <strong>{{ product.name }}</strong>
+                                {% if product.shade %}
+                                <br><small class="text-muted">Shade: {{ product.shade }}</small>
+                                {% endif %}
+                            </td>
+                            <td>{{ product.brand.name }}</td>
+                            <td>{{ product.expiration_date }}</td>
+                            <td>{{ product.days_until_expiration }} days</td>
+                            <td>
+                                <span class="badge bg-info">SOON</span>
+                            </td>
+                            <td>
+                                <a href="{% url 'myapp:product_detail' product.pk %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 空状态 -->
+    {% if not expired_products and not urgent_products and not soon_products %}
+    <div class="text-center py-5">
+        <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+        <h3>No Expiring Products!</h3>
+        <p class="text-muted">All your products are in good condition. Great job!</p>
+        <a href="{% url 'myapp:product_list' %}" class="btn btn-primary">
+            <i class="fas fa-list me-1"></i> View All Products
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.stats-card {
+    border-left: 4px solid;
+    transition: transform 0.2s;
+}
+.stats-card:hover {
+    transform: translateY(-2px);
+}
+.stats-card.expired { border-left-color: #dc3545; }
+.stats-card.urgent { border-left-color: #fd7e14; }
+.stats-card.soon { border-left-color: #0dcaf0; }
+.stats-card.total { border-left-color: #6c757d; }
+</style>
+{% endblock %}

@@ -1,0 +1,316 @@
+{% extends 'myapp/base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Product List - Cosmetic Management System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-cubes me-2"></i>My Cosmetics</h1>
+    <a href="{% url 'myapp:product_add' %}" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i> Add New Product
+    </a>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card stats-card good">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Good</h5>
+                        <h2 class="card-text">{{ good_count }}</h2>
+                    </div>
+                    <div class="text-success">
+                        <i class="fas fa-check-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card stats-card soon">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Expiring Soon</h5>
+                        <h2 class="card-text">{{ soon_count }}</h2>
+                    </div>
+                    <div class="text-warning">
+                        <i class="fas fa-clock fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card stats-card urgent">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Urgent</h5>
+                        <h2 class="card-text">{{ urgent_count }}</h2>
+                    </div>
+                    <div class="text-warning">
+                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card stats-card expired">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Expired</h5>
+                        <h2 class="card-text">{{ expired_count }}</h2>
+                    </div>
+                    <div class="text-danger">
+                        <i class="fas fa-times-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Search by product name, brand..." id="search-input">
+                    <button class="btn btn-outline-secondary" type="button" id="search-button">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="status-filter">
+                    <option value="">All Statuses</option>
+                    <option value="good">Good</option>
+                    <option value="soon">Expiring Soon</option>
+                    <option value="urgent">Urgent</option>
+                    <option value="expired">Expired</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="category-filter">
+                    <option value="">All Categories</option>
+                    <!-- Category options will be loaded dynamically via JavaScript -->
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Product List -->
+{% if products %}
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead class="table-light">
+            <tr>
+                <th>Product Name</th>
+                <th>Brand</th>
+                <th>Category</th>
+                <th>Expiration Date</th>
+                <th>Status</th>
+                <th>Days Left</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in products %}
+            <tr class="align-middle">
+                <td>
+                    <strong>{{ product.name }}</strong>
+                    {% if product.shade %}
+                    <br><small class="text-muted">Shade: {{ product.shade }}</small>
+                    {% endif %}
+                </td>
+                <td>{{ product.brand.name }}</td>
+                <td>{{ product.category.name }}</td>
+                <td>{{ product.expiration_date }}</td>
+                <td>
+                    <span class="status-badge {{ product.expiration_status }}">
+                        {{ product.expiration_status|get_status_text }}
+                    </span>
+                </td>
+                <td>
+                    {% if product.days_until_expiration < 0 %}
+                    <span class="text-danger">Expired {{ product.days_until_expiration|abs }} days ago</span>
+                    {% else %}
+                    {{ product.days_until_expiration }} days
+                    {% endif %}
+                </td>
+                <td class="table-actions">
+                    <div class="action-buttons">
+                        <a href="{% url 'myapp:product_detail' product.pk %}" class="btn btn-sm btn-outline-primary" 
+                           data-bs-toggle="tooltip" title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="{% url 'myapp:product_edit' product.pk %}" class="btn btn-sm btn-outline-secondary" 
+                           data-bs-toggle="tooltip" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="{% url 'myapp:product_delete' product.pk %}" class="btn btn-sm btn-outline-danger" 
+                           data-bs-toggle="tooltip" title="Delete"
+                           onclick="return confirm('Are you sure you want to delete {{ product.name }}?')">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{% if is_paginated %}
+<nav aria-label="Page navigation">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+        </li>
+        {% endif %}
+        
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <li class="page-item active">
+                <span class="page-link">{{ num }}</span>
+            </li>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+            </li>
+            {% endif %}
+        {% endfor %}
+        
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<!-- Empty State -->
+<div class="empty-state">
+    <i class="fas fa-box-open"></i>
+    <h3>No Products Found</h3>
+    <p class="text-muted">You haven't added any cosmetics yet. Click the button above to get started.</p>
+    <a href="{% url 'myapp:product_add' %}" class="btn btn-primary mt-3">
+        <i class="fas fa-plus me-1"></i> Add Your First Product
+    </a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Page-specific JavaScript code
+document.addEventListener('DOMContentLoaded', function() {
+    // Search functionality
+    const searchInput = document.getElementById('search-input');
+    const searchButton = document.getElementById('search-button');
+    
+    function performSearch() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const rows = document.querySelectorAll('tbody tr');
+        
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            if (text.includes(searchTerm)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+    
+    if (searchInput && searchButton) {
+        searchButton.addEventListener('click', performSearch);
+        searchInput.addEventListener('keyup', function(event) {
+            if (event.key === 'Enter') {
+                performSearch();
+            }
+        });
+    }
+    
+    // Status filter
+    const statusFilter = document.getElementById('status-filter');
+    if (statusFilter) {
+        statusFilter.addEventListener('change', function() {
+            const status = this.value;
+            const rows = document.querySelectorAll('tbody tr');
+            
+            rows.forEach(row => {
+                if (!status) {
+                    row.style.display = '';
+                } else {
+                    const statusBadge = row.querySelector('.status-badge');
+                    if (statusBadge && statusBadge.classList.contains(`status-${status}`)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                }
+            });
+        });
+    }
+    
+    // Category filter - need to populate from backend data
+    const categoryFilter = document.getElementById('category-filter');
+    if (categoryFilter) {
+        // This would need to be populated with actual categories from your data
+        // For now, we'll add a placeholder
+        if (categoryFilter.children.length <= 1) { // Only has "All Categories"
+            const categories = [
+                'Skincare', 'Makeup', 'Fragrance', 'Hair Care', 'Body Care'
+            ];
+            
+            categories.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat.toLowerCase().replace(' ', '-');
+                option.textContent = cat;
+                categoryFilter.appendChild(option);
+            });
+        }
+        
+        categoryFilter.addEventListener('change', function() {
+            const category = this.value;
+            const rows = document.querySelectorAll('tbody tr');
+            
+            rows.forEach(row => {
+                if (!category) {
+                    row.style.display = '';
+                } else {
+                    const categoryCell = row.querySelector('td:nth-child(3)'); // 3rd column is category
+                    if (categoryCell) {
+                        const cellText = categoryCell.textContent.toLowerCase();
+                        if (cellText.includes(category)) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    }
+                }
+            });
+        });
+    }
+    
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,160 @@
+{% extends 'myapp/base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}{{ product.name }} - Product Details{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Product Details
+                    </h4>
+                    <div class="action-buttons">
+                        <a href="{% url 'myapp:product_edit' product.pk %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-edit me-1"></i> Edit
+                        </a>
+                        <a href="{% url 'myapp:product_list' %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-arrow-left me-1"></i> Back to List
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Basic Information</h5>
+                        <table class="table table-borderless">
+                            <tr>
+                                <th width="30%">Product Name:</th>
+                                <td>{{ product.name }}</td>
+                            </tr>
+                            <tr>
+                                <th>Brand:</th>
+                                <td>{{ product.brand.name }}</td>
+                            </tr>
+                            <tr>
+                                <th>Category:</th>
+                                <td>{{ product.category.name }}</td>
+                            </tr>
+                            <tr>
+                                <th>Shade:</th>
+                                <td>{{ product.shade|default:"N/A" }}</td>
+                            </tr>
+                            <tr>
+                                <th>Capacity:</th>
+                                <td>{{ product.capacity|default:"N/A" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Purchase Information</h5>
+                        <table class="table table-borderless">
+                            <tr>
+                                <th width="30%">Purchase Date:</th>
+                                <td>{{ product.purchase_date }}</td>
+                            </tr>
+                            <tr>
+                                <th>Price:</th>
+                                <td>{% if product.price %}${{ product.price }}{% else %}N/A{% endif %}</td>
+                            </tr>
+                            <tr>
+                                <th>Purchase Location:</th>
+                                <td>{{ product.purchase_location|default:"N/A" }}</td>
+                            </tr>
+                            <tr>
+                                <th>Expiration Date:</th>
+                                <td>{{ product.expiration_date }}</td>
+                            </tr>
+                            <tr>
+                                <th>Usage Status:</th>
+                                <td>
+                                    <span class="status-badge status-{{ product.status }}">
+                                        {{ product.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                {% if product.description or product.notes %}
+                <div class="row mt-4">
+                    {% if product.description %}
+                    <div class="col-md-6">
+                        <h5>Product Description</h5>
+                        <p class="text-muted">{{ product.description|linebreaks }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if product.notes %}
+                    <div class="col-md-6">
+                        <h5>Usage Notes</h5>
+                        <p class="text-muted">{{ product.notes|linebreaks }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                <!-- Expiry Status Information -->
+                <div class="alert alert-{% if product.exp_status == 'good' %}success{% elif product.exp_status == 'expired' %}danger{% else %}warning{% endif %} mt-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="alert-heading mb-1">Expiry Status: {{ product.get_exp_status_display }}</h6>
+                            <p class="mb-0">
+                                {% if product.days_int < 0 %}
+                                This product expired {{ product.days_int|absolute_value}} days ago
+                                {% else %}
+                                {{ product.days_int }} days until expiration
+                                {% endif %}
+                            </p>
+                        </div>
+                        {% if product.exp_status == 'expired' %}
+                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                        {% elif product.exp_status == 'urgent' %}
+                        <i class="fas fa-clock fa-2x"></i>
+                        {% else %}
+                        <i class="fas fa-check-circle fa-2x"></i>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Product Image -->
+        {% if product.image %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Product Image</h5>
+            </div>
+            <div class="card-body text-center">
+                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="img-fluid rounded" style="max-height: 200px;">
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Quick Actions -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'myapp:product_edit' product.pk %}" class="btn btn-outline-primary">
+                        <i class="fas fa-edit me-1"></i> Edit Product
+                    </a>
+                    <a href="{% url 'myapp:product_delete' product.pk %}" class="btn btn-outline-danger" 
+                       onclick="return confirm('Are you sure you want to delete this product?')">
+                        <i class="fas fa-trash me-1"></i> Delete Product
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
