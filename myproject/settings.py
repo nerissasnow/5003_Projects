@@ -122,5 +122,5 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_URL = '/myapp/login/'  # 登录页面URL
-LOGIN_REDIRECT_URL = '/myapp/'  # 登录成功后重定向
+LOGIN_REDIRECT_URL = '/myapp/products/'  # 登录成功后重定向
 LOGOUT_REDIRECT_URL = '/myapp/login/'  # 退出后重定向
