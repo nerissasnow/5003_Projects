@@ -12,7 +12,7 @@ class CustomPaginatorListView(LoginRequiredMixin, ListView):
     """自定义分页基类，解决原 ListView 分页 kwargs 错误"""
     paginate_by = 10
 
-    def paginate_queryset(self, queryset, page_size):
+    def paginate_queryset(self, queryset, page_size):  # 修复方法名
         from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
         # 手动初始化分页器，从 request.GET 获取页码（不依赖 self.kwargs）
         paginator = Paginator(queryset, page_size)
@@ -98,7 +98,8 @@ class CosmeticProductListView(CustomPaginatorListView):
         context['total_count'] = all_products.count()
         context['today'] = today
         
-        # 添加所有分类用于下拉框
+        # 添加所有品牌和分类用于下拉框
+        context['brands'] = Brand.objects.all()  # 添加品牌数据
         context['categories'] = Category.objects.all()
         
         # 添加当前筛选参数
@@ -181,10 +182,35 @@ class CosmeticProductCreateView(LoginRequiredMixin, CreateView):
     def get_success_url(self):
         return reverse_lazy('myapp:product_list')
     
+    def get_initial(self):
+        """设置表单字段的初始值"""
+        initial = super().get_initial()
+        # 为pao_after_opening设置默认值
+        initial['pao_after_opening'] = 12  # 默认12个月
+        return initial
+    
+    def get_context_data(self, **kwargs):
+        """关键修复：添加上下文数据，包括品牌和分类"""
+        context = super().get_context_data(**kwargs)
+        # 添加所有品牌和分类用于下拉框
+        context['brands'] = Brand.objects.all()
+        context['categories'] = Category.objects.all()
+        return context
+    
     def form_valid(self, form):
         form.instance.user = self.request.user
+        # 如果pao_after_opening为空，设置默认值
+        if not form.cleaned_data.get('pao_after_opening'):
+            form.instance.pao_after_opening = 12
         messages.success(self.request, '产品添加成功！')
         return super().form_valid(form)
+    
+    def form_invalid(self, form):
+        """表单验证失败时调用"""
+        # 添加详细的错误信息
+        if 'pao_after_opening' in form.errors:
+            messages.error(self.request, '请填写"开封后使用期限"字段或接受默认值')
+        return super().form_invalid(form)
 
 class CosmeticProductUpdateView(LoginRequiredMixin, UpdateView):
     model = CosmeticProduct
@@ -200,9 +226,36 @@ class CosmeticProductUpdateView(LoginRequiredMixin, UpdateView):
     def get_queryset(self):
         return CosmeticProduct.objects.filter(user=self.request.user)
     
+    def get_initial(self):
+        """设置表单字段的初始值"""
+        initial = super().get_initial()
+        # 如果pao_after_opening为空，设置默认值
+        if not initial.get('pao_after_opening'):
+            initial['pao_after_opening'] = 12
+        return initial
+    
+    def get_context_data(self, **kwargs):
+        """关键修复：添加上下文数据，包括品牌和分类"""
+        context = super().get_context_data(**kwargs)
+        # 添加所有品牌和分类用于下拉框
+        context['brands'] = Brand.objects.all()
+        context['categories'] = Category.objects.all()
+        return context
+    
     def form_valid(self, form):
+        # 如果pao_after_opening为空，设置默认值
+        if not form.cleaned_data.get('pao_after_opening'):
+            form.instance.pao_after_opening = 12
         messages.success(self.request, '产品更新成功！')
         return super().form_valid(form)
+    
+    def form_invalid(self, form):
+        """表单验证失败时调用"""
+        # 添加详细的错误信息
+        if 'pao_after_opening' in form.errors:
+            messages.error(self.request, '请填写"开封后使用期限"字段或接受默认值')
+        messages.error(self.request, '请检查表单中的错误并重新提交。')
+        return super().form_invalid(form)
 
 class CosmeticProductDeleteView(LoginRequiredMixin, DeleteView):
     model = CosmeticProduct

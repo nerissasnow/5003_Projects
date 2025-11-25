@@ -5,121 +5,364 @@
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-lg-8">
+    <div class="col-lg-10">
         <div class="card">
-            <div class="card-header">
+            <div class="card-header bg-primary text-white">
                 <h4 class="card-title mb-0">
-                    <i class="fas {% if form.instance.pk %}fa-edit{% else %}fa-plus{% endif %} me-2"></i>
+                    <i class="fas {% if form.instance.pk %}fa-edit{% else %}fa-plus-circle{% endif %} me-2"></i>
                     {% if form.instance.pk %}Edit Product{% else %}Add New Product{% endif %}
                 </h4>
             </div>
             <div class="card-body">
-                <form method="post" enctype="multipart/form-data">
+                <!-- 错误提示 -->
+                {% if form.errors %}
+                <div class="alert alert-danger">
+                    <h5 class="alert-heading">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Please correct the following errors:
+                    </h5>
+                    <ul class="mb-0">
+                        {% for field, errors in form.errors.items %}
+                            {% for error in errors %}
+                            <li>
+                                <strong>{{ field|title }}:</strong> {{ error }}
+                            </li>
+                            {% endfor %}
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                
+                <form method="post" enctype="multipart/form-data" novalidate>
                     {% csrf_token %}
                     
-                    {% if form.errors %}
-                    <div class="alert alert-danger">
-                        <strong>Please correct the following errors:</strong>
-                        <ul class="mb-0">
-                            {% for field, errors in form.errors.items %}
-                                {% for error in errors %}
-                                <li>{{ error }}</li>
-                                {% endfor %}
-                            {% endfor %}
-                        </ul>
-                    </div>
-                    {% endif %}
-                    
                     <div class="row">
+                        <!-- 左侧：基本信息 -->
                         <div class="col-md-6">
-                            <!-- Basic Information -->
-                            <div class="mb-3 required-field">
-                                <label for="{{ form.name.id_for_label }}" class="form-label">Product Name</label>
-                                {{ form.name }}
-                                {% if form.name.help_text %}
-                                <div class="form-text">{{ form.name.help_text }}</div>
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="fas fa-info-circle me-2"></i>Basic Information
+                            </h5>
+                            
+                            <!-- 产品名称 -->
+                            <div class="mb-3">
+                                <label for="{{ form.name.id_for_label }}" class="form-label required">
+                                    <i class="fas fa-tag me-1"></i>Product Name
+                                </label>
+                                <input type="text" class="form-control {% if form.name.errors %}is-invalid{% endif %}" 
+                                       id="{{ form.name.id_for_label }}" name="{{ form.name.name }}" 
+                                       value="{{ form.name.value|default:'' }}" 
+                                       placeholder="Enter product name" required>
+                                {% if form.name.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.name.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
                                 {% endif %}
                             </div>
                             
-                            <div class="mb-3 required-field">
-                                <label for="{{ form.brand.id_for_label }}" class="form-label">Brand</label>
-                                {{ form.brand }}
-                            </div>
-                            
-                            <div class="mb-3 required-field">
-                                <label for="{{ form.category.id_for_label }}" class="form-label">Category</label>
-                                {{ form.category }}
-                            </div>
-                            
+                            <!-- 品牌下拉框 -->
                             <div class="mb-3">
-                                <label for="{{ form.shade.id_for_label }}" class="form-label">Shade/Color</label>
-                                {{ form.shade }}
+                                <label for="brand" class="form-label required">
+                                    <i class="fas fa-trademark me-1"></i>Brand
+                                </label>
+                                <select class="form-select {% if form.brand.errors %}is-invalid{% endif %}" 
+                                        id="brand" name="brand" required>
+                                    <option value="">Select a brand</option>
+                                    {% for brand in brands %}
+                                    <option value="{{ brand.id }}" 
+                                            {% if form.brand.value|stringformat:"i" == brand.id|stringformat:"i" %}selected{% endif %}>
+                                        {{ brand.name }}
+                                    </option>
+                                    {% empty %}
+                                    <option value="">No brands available</option>
+                                    {% endfor %}
+                                </select>
+                                {% if form.brand.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.brand.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                {% if not brands %}
+                                <div class="form-text text-warning">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                    No brands found. Please <a href="/admin/myapp/brand/add/">add a brand</a> first.
+                                </div>
+                                {% endif %}
                             </div>
                             
+                            <!-- 分类下拉框 -->
                             <div class="mb-3">
-                                <label for="{{ form.capacity.id_for_label }}" class="form-label">Capacity</label>
-                                {{ form.capacity }}
+                                <label for="category" class="form-label">
+                                    <i class="fas fa-list me-1"></i>Category
+                                </label>
+                                <select class="form-select {% if form.category.errors %}is-invalid{% endif %}" 
+                                        id="category" name="category">
+                                    <option value="">Select a category</option>
+                                    {% for category in categories %}
+                                    <option value="{{ category.id }}" 
+                                            {% if form.category.value|stringformat:"i" == category.id|stringformat:"i" %}selected{% endif %}>
+                                        {{ category.name }} - {{ category.get_category_type_display }}
+                                    </option>
+                                    {% empty %}
+                                    <option value="">No categories available</option>
+                                    {% endfor %}
+                                </select>
+                                {% if form.category.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.category.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                {% if not categories %}
+                                <div class="form-text text-warning">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                    No categories found. Please <a href="/admin/myapp/category/add/">add a category</a> first.
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- 色号/颜色 -->
+                            <div class="mb-3">
+                                <label for="{{ form.shade.id_for_label }}" class="form-label">
+                                    <i class="fas fa-palette me-1"></i>Shade/Color
+                                </label>
+                                <input type="text" class="form-control" 
+                                       id="{{ form.shade.id_for_label }}" name="{{ form.shade.name }}" 
+                                       value="{{ form.shade.value|default:'' }}" 
+                                       placeholder="e.g., Ruby Red, Ivory">
+                            </div>
+                            
+                            <!-- 容量 -->
+                            <div class="mb-3">
+                                <label for="{{ form.capacity.id_for_label }}" class="form-label">
+                                    <i class="fas fa-weight me-1"></i>Capacity
+                                </label>
+                                <input type="text" class="form-control" 
+                                       id="{{ form.capacity.id_for_label }}" name="{{ form.capacity.name }}" 
+                                       value="{{ form.capacity.value|default:'' }}" 
+                                       placeholder="e.g., 50ml, 100g">
+                            </div>
+                            
+                            <!-- 开封日期 -->
+                            <div class="mb-3">
+                                <label for="{{ form.opened_date.id_for_label }}" class="form-label">
+                                    <i class="fas fa-calendar-check me-1"></i>Opened Date
+                                </label>
+                                <input type="date" class="form-control" 
+                                       id="{{ form.opened_date.id_for_label }}" name="{{ form.opened_date.name }}" 
+                                       value="{{ form.opened_date.value|default:'' }}">
+                            </div>
+                            
+                            <!-- 开封后使用期限 (PAO) - 修复这个字段 -->
+                            <div class="mb-3">
+                                <label for="{{ form.pao_after_opening.id_for_label }}" class="form-label">
+                                    <i class="fas fa-clock me-1"></i>Period After Opening (months)
+                                </label>
+                                <input type="number" class="form-control {% if form.pao_after_opening.errors %}is-invalid{% endif %}" 
+                                       id="{{ form.pao_after_opening.id_for_label }}" 
+                                       name="{{ form.pao_after_opening.name }}" 
+                                       value="{{ form.pao_after_opening.value|default:12 }}" 
+                                       min="1" max="36" 
+                                       placeholder="12">
+                                {% if form.pao_after_opening.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.pao_after_opening.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="form-text text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Number of months to use after opening. Default is 12 months.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 右侧：购买和过期信息 -->
+                        <div class="col-md-6">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="fas fa-shopping-cart me-2"></i>Purchase & Expiry Information
+                            </h5>
+                            
+                            <!-- 购买日期 -->
+                            <div class="mb-3">
+                                <label for="{{ form.purchase_date.id_for_label }}" class="form-label required">
+                                    <i class="fas fa-calendar-day me-1"></i>Purchase Date
+                                </label>
+                                <input type="date" class="form-control {% if form.purchase_date.errors %}is-invalid{% endif %}" 
+                                       id="{{ form.purchase_date.id_for_label }}" name="{{ form.purchase_date.name }}" 
+                                       value="{{ form.purchase_date.value|default:'' }}" required>
+                                {% if form.purchase_date.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.purchase_date.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- 价格 -->
+                            <div class="mb-3">
+                                <label for="{{ form.price.id_for_label }}" class="form-label">
+                                    <i class="fas fa-dollar-sign me-1"></i>Price
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" step="0.01" class="form-control" 
+                                           id="{{ form.price.id_for_label }}" name="{{ form.price.name }}" 
+                                           value="{{ form.price.value|default:'' }}" 
+                                           placeholder="0.00">
+                                </div>
+                            </div>
+                            
+                            <!-- 购买地点 -->
+                            <div class="mb-3">
+                                <label for="{{ form.purchase_location.id_for_label }}" class="form-label">
+                                    <i class="fas fa-store me-1"></i>Purchase Location
+                                </label>
+                                <input type="text" class="form-control" 
+                                       id="{{ form.purchase_location.id_for_label }}" name="{{ form.purchase_location.name }}" 
+                                       value="{{ form.purchase_location.value|default:'' }}" 
+                                       placeholder="e.g., Sephora, Amazon">
+                            </div>
+                            
+                            <!-- 过期日期 -->
+                            <div class="mb-3">
+                                <label for="{{ form.expiration_date.id_for_label }}" class="form-label required">
+                                    <i class="fas fa-calendar-times me-1"></i>Expiration Date
+                                </label>
+                                <input type="date" class="form-control {% if form.expiration_date.errors %}is-invalid{% endif %}" 
+                                       id="{{ form.expiration_date.id_for_label }}" name="{{ form.expiration_date.name }}" 
+                                       value="{{ form.expiration_date.value|default:'' }}" required>
+                                {% if form.expiration_date.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.expiration_date.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="form-text text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>Please update expiration date after opening the product
+                                </div>
+                            </div>
+                            
+                            <!-- 使用状态 -->
+                            <div class="mb-3">
+                                <label for="{{ form.status.id_for_label }}" class="form-label required">
+                                    <i class="fas fa-vial me-1"></i>Usage Status
+                                </label>
+                                <select class="form-select {% if form.status.errors %}is-invalid{% endif %}" 
+                                        id="{{ form.status.id_for_label }}" name="{{ form.status.name }}" required>
+                                    <option value="">Select usage status</option>
+                                    {% for value, display in form.fields.status.choices %}
+                                    <option value="{{ value }}" 
+                                            {% if form.status.value == value %}selected{% endif %}>
+                                        {{ display }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                {% if form.status.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.status.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- 评分 -->
+                            <div class="mb-3">
+                                <label for="{{ form.rating.id_for_label }}" class="form-label">
+                                    <i class="fas fa-star me-1"></i>Rating (1-5)
+                                </label>
+                                <select class="form-select" id="{{ form.rating.id_for_label }}" name="{{ form.rating.name }}">
+                                    <option value="">No rating</option>
+                                    <option value="1" {% if form.rating.value == 1 %}selected{% endif %}>★☆☆☆☆ (1)</option>
+                                    <option value="2" {% if form.rating.value == 2 %}selected{% endif %}>★★☆☆☆ (2)</option>
+                                    <option value="3" {% if form.rating.value == 3 %}selected{% endif %}>★★★☆☆ (3)</option>
+                                    <option value="4" {% if form.rating.value == 4 %}selected{% endif %}>★★★★☆ (4)</option>
+                                    <option value="5" {% if form.rating.value == 5 %}selected{% endif %}>★★★★★ (5)</option>
+                                </select>
+                            </div>
+                            
+                            <!-- 产品图片 -->
+                            <div class="mb-3">
+                                <label for="{{ form.image.id_for_label }}" class="form-label">
+                                    <i class="fas fa-image me-1"></i>Product Image
+                                </label>
+                                <input type="file" class="form-control" 
+                                       id="{{ form.image.id_for_label }}" name="{{ form.image.name }}" 
+                                       accept="image/*">
+                                {% if form.instance.image %}
+                                <div class="mt-2">
+                                    <small>Current image:</small>
+                                    <img src="{{ form.instance.image.url }}" alt="Current image" class="img-thumbnail ms-2" style="max-height: 50px;">
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 其他信息 -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="fas fa-align-left me-2"></i>Additional Information
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <!-- 产品描述 -->
+                            <div class="mb-3">
+                                <label for="{{ form.description.id_for_label }}" class="form-label">
+                                    <i class="fas fa-align-left me-1"></i>Product Description
+                                </label>
+                                <textarea class="form-control" id="{{ form.description.id_for_label }}" 
+                                          name="{{ form.description.name }}" rows="3" 
+                                          placeholder="Describe the product...">{{ form.description.value|default:'' }}</textarea>
+                            </div>
+                            
+                            <!-- 成分 -->
+                            <div class="mb-3">
+                                <label for="{{ form.ingredients.id_for_label }}" class="form-label">
+                                    <i class="fas fa-flask me-1"></i>Ingredients
+                                </label>
+                                <textarea class="form-control" id="{{ form.ingredients.id_for_label }}" 
+                                          name="{{ form.ingredients.name }}" rows="3" 
+                                          placeholder="List of ingredients...">{{ form.ingredients.value|default:'' }}</textarea>
                             </div>
                         </div>
                         
                         <div class="col-md-6">
-                            <!-- Purchase Information -->
-                            <div class="mb-3 required-field">
-                                <label for="{{ form.purchase_date.id_for_label }}" class="form-label">Purchase Date</label>
-                                {{ form.purchase_date }}
-                            </div>
-                            
+                            <!-- 备注 -->
                             <div class="mb-3">
-                                <label for="{{ form.price.id_for_label }}" class="form-label">Price</label>
-                                <div class="input-group">
-                                    <span class="input-group-text">$</span>
-                                    {{ form.price }}
-                                </div>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label for="{{ form.purchase_location.id_for_label }}" class="form-label">Purchase Location</label>
-                                {{ form.purchase_location }}
-                            </div>
-                            
-                            <!-- Expiry Management -->
-                            <div class="mb-3 required-field">
-                                <label for="{{ form.expiration_date.id_for_label }}" class="form-label">Expiration Date</label>
-                                {{ form.expiration_date }}
-                                <div class="form-text">Please update expiration date after opening the product</div>
-                            </div>
-                            
-                            <div class="mb-3 required-field">
-                                <label for="{{ form.status.id_for_label }}" class="form-label">Usage Status</label>
-                                {{ form.status }}
+                                <label for="{{ form.notes.id_for_label }}" class="form-label">
+                                    <i class="fas fa-sticky-note me-1"></i>Notes
+                                </label>
+                                <textarea class="form-control" id="{{ form.notes.id_for_label }}" 
+                                          name="{{ form.notes.name }}" rows="6" 
+                                          placeholder="Any additional notes...">{{ form.notes.value|default:'' }}</textarea>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Additional Information -->
-                    <div class="mb-3">
-                        <label for="{{ form.description.id_for_label }}" class="form-label">Product Description</label>
-                        {{ form.description }}
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="{{ form.notes.id_for_label }}" class="form-label">Usage Notes</label>
-                        {{ form.notes }}
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="{{ form.image.id_for_label }}" class="form-label">Product Image</label>
-                        {{ form.image }}
-                    </div>
-                    
-                    <div class="d-flex justify-content-between">
+                    <!-- 表单操作按钮 -->
+                    <div class="d-flex justify-content-between mt-4 pt-3 border-top">
                         <a href="{% url 'myapp:product_list' %}" class="btn btn-secondary">
                             <i class="fas fa-arrow-left me-1"></i> Back to List
                         </a>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save me-1"></i> 
-                            {% if form.instance.pk %}Update Product{% else %}Add Product{% endif %}
-                        </button>
+                        <div>
+                            <button type="reset" class="btn btn-outline-warning me-2">
+                                <i class="fas fa-undo me-1"></i> Reset
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i> 
+                                {% if form.instance.pk %}Update Product{% else %}Add Product{% endif %}
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -128,23 +371,92 @@
 </div>
 {% endblock %}
 
+{% block extra_css %}
+<style>
+.required::after {
+    content: " *";
+    color: #dc3545;
+}
+.form-label {
+    font-weight: 500;
+}
+.card-header {
+    border-bottom: 2px solid rgba(0,0,0,.125);
+}
+.border-bottom {
+    border-color: #dee2e6 !important;
+}
+</style>
+{% endblock %}
+
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Set today as default purchase date
+    // 设置默认日期
+    const today = new Date().toISOString().split('T')[0];
+    
+    // 设置默认购买日期为今天
     const purchaseDateField = document.getElementById('{{ form.purchase_date.id_for_label }}');
     if (purchaseDateField && !purchaseDateField.value) {
-        const today = new Date().toISOString().split('T')[0];
         purchaseDateField.value = today;
     }
     
-    // Set default expiration date to one year from now
+    // 设置默认过期日期为一年后
     const expirationDateField = document.getElementById('{{ form.expiration_date.id_for_label }}');
     if (expirationDateField && !expirationDateField.value) {
         const nextYear = new Date();
         nextYear.setFullYear(nextYear.getFullYear() + 1);
         expirationDateField.value = nextYear.toISOString().split('T')[0];
     }
+    
+    // 设置默认PAO值为12个月
+    const paoField = document.getElementById('{{ form.pao_after_opening.id_for_label }}');
+    if (paoField && !paoField.value) {
+        paoField.value = 12;
+    }
+    
+    // 实时验证表单
+    const form = document.querySelector('form');
+    const requiredFields = form.querySelectorAll('[required]');
+    
+    requiredFields.forEach(field => {
+        field.addEventListener('blur', function() {
+            validateField(this);
+        });
+    });
+    
+    function validateField(field) {
+        if (!field.value.trim()) {
+            field.classList.add('is-invalid');
+        } else {
+            field.classList.remove('is-invalid');
+        }
+    }
+    
+    // 表单提交前验证
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                field.classList.add('is-invalid');
+                isValid = false;
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            // 滚动到第一个错误字段
+            const firstError = form.querySelector('.is-invalid');
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    });
+    
+    // 调试信息
+    console.log('Brands count:', {{ brands|length }});
+    console.log('Categories count:', {{ categories|length }});
 });
 </script>
 {% endblock %}

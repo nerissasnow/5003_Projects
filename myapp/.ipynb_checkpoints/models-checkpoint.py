@@ -116,7 +116,9 @@ class CosmeticProduct(models.Model):
     pao_after_opening = models.PositiveIntegerField(
         default=12, 
         verbose_name="Period After Opening (months)",
-        help_text="Number of months to use after opening"
+        help_text="Number of months to use after opening",
+        blank=True,   # 允许为空
+        null=True     # 数据库允许为空
     )
     
     # User rating
