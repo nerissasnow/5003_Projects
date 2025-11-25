@@ -12,7 +12,7 @@
     </a>
 </div>
 
-<!-- Statistics Cards -->
+<!-- 动态统计卡片 - 真实数据 -->
 <div class="row mb-4">
     <div class="col-md-3 mb-3">
         <div class="card stats-card good">
@@ -76,36 +76,61 @@
     </div>
 </div>
 
-<!-- Search and Filter -->
+<!-- 后端筛选表单 - 保留这个真实的筛选功能 -->
 <div class="card mb-4">
     <div class="card-body">
-        <div class="row">
-            <div class="col-md-6">
-                <div class="input-group">
-                    <input type="text" class="form-control" placeholder="Search by product name, brand..." id="search-input">
-                    <button class="btn btn-outline-secondary" type="button" id="search-button">
-                        <i class="fas fa-search"></i>
-                    </button>
+        <form method="get" action="{% url 'myapp:product_list' %}" id="filter-form">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <input type="text" class="form-control" 
+                               placeholder="Search by product name, brand..." 
+                               name="search" value="{{ current_search }}">
+                        <button class="btn btn-outline-primary" type="submit">
+                            <i class="fas fa-search"></i> Search
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" name="status" onchange="this.form.submit()">
+                        <option value="">All Statuses</option>
+                        <option value="good" {% if current_status == 'good' %}selected{% endif %}>Good</option>
+                        <option value="soon" {% if current_status == 'soon' %}selected{% endif %}>Expiring Soon</option>
+                        <option value="urgent" {% if current_status == 'urgent' %}selected{% endif %}>Urgent</option>
+                        <option value="expired" {% if current_status == 'expired' %}selected{% endif %}>Expired</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" name="category" onchange="this.form.submit()">
+                        <option value="">All Categories</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}" 
+                                {% if current_category == category.id|stringformat:"i" %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
                 </div>
             </div>
-            <div class="col-md-3">
-                <select class="form-select" id="status-filter">
-                    <option value="">All Statuses</option>
-                    <option value="good">Good</option>
-                    <option value="soon">Expiring Soon</option>
-                    <option value="urgent">Urgent</option>
-                    <option value="expired">Expired</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <select class="form-select" id="category-filter">
-                    <option value="">All Categories</option>
-                    <!-- Category options will be loaded dynamically via JavaScript -->
-                </select>
-            </div>
-        </div>
+        </form>
     </div>
 </div>
+
+<!-- 筛选结果提示 -->
+{% if current_status or current_category or current_search %}
+<div class="alert alert-info d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <strong>Filter Applied:</strong>
+        {% if current_status %}Status: {{ current_status|title }}{% endif %}
+        {% if current_category %} | Category: {% for cat in categories %}{% if cat.id == current_category|add:0 %}{{ cat.name }}{% endif %}{% endfor %}{% endif %}
+        {% if current_search %} | Search: "{{ current_search }}"{% endif %}
+        | Showing {{ products|length }} of {{ total_count }} products
+    </div>
+    <a href="{% url 'myapp:product_list' %}" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-times"></i> Clear Filters
+    </a>
+</div>
+{% endif %}
 
 <!-- Product List -->
 {% if products %}
@@ -169,13 +194,13 @@
     </table>
 </div>
 
-<!-- Pagination -->
+<!-- Pagination with filter parameters -->
 {% if is_paginated %}
 <nav aria-label="Page navigation">
     <ul class="pagination justify-content-center">
         {% if page_obj.has_previous %}
         <li class="page-item">
-            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Previous</a>
         </li>
         {% endif %}
         
@@ -186,14 +211,14 @@
             </li>
             {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
             <li class="page-item">
-                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                <a class="page-link" href="?page={{ num }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
             </li>
             {% endif %}
         {% endfor %}
         
         {% if page_obj.has_next %}
         <li class="page-item">
-            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Next</a>
         </li>
         {% endif %}
     </ul>
@@ -205,112 +230,45 @@
 <div class="empty-state">
     <i class="fas fa-box-open"></i>
     <h3>No Products Found</h3>
-    <p class="text-muted">You haven't added any cosmetics yet. Click the button above to get started.</p>
+    <p class="text-muted">
+        {% if current_status or current_category or current_search %}
+        No products match your current filters. Try adjusting your search criteria.
+        {% else %}
+        You haven't added any cosmetics yet. Click the button above to get started.
+        {% endif %}
+    </p>
+    {% if current_status or current_category or current_search %}
+    <a href="{% url 'myapp:product_list' %}" class="btn btn-secondary mt-3">
+        <i class="fas fa-times me-1"></i> Clear Filters
+    </a>
+    {% else %}
     <a href="{% url 'myapp:product_add' %}" class="btn btn-primary mt-3">
         <i class="fas fa-plus me-1"></i> Add Your First Product
     </a>
+    {% endif %}
 </div>
 {% endif %}
 {% endblock %}
 
 {% block extra_js %}
 <script>
-// Page-specific JavaScript code
+// 只保留必要的JavaScript功能
 document.addEventListener('DOMContentLoaded', function() {
-    // Search functionality
-    const searchInput = document.getElementById('search-input');
-    const searchButton = document.getElementById('search-button');
-    
-    function performSearch() {
-        const searchTerm = searchInput.value.toLowerCase();
-        const rows = document.querySelectorAll('tbody tr');
-        
-        rows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            if (text.includes(searchTerm)) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
-        });
-    }
-    
-    if (searchInput && searchButton) {
-        searchButton.addEventListener('click', performSearch);
-        searchInput.addEventListener('keyup', function(event) {
-            if (event.key === 'Enter') {
-                performSearch();
-            }
-        });
-    }
-    
-    // Status filter
-    const statusFilter = document.getElementById('status-filter');
-    if (statusFilter) {
-        statusFilter.addEventListener('change', function() {
-            const status = this.value;
-            const rows = document.querySelectorAll('tbody tr');
-            
-            rows.forEach(row => {
-                if (!status) {
-                    row.style.display = '';
-                } else {
-                    const statusBadge = row.querySelector('.status-badge');
-                    if (statusBadge && statusBadge.classList.contains(`status-${status}`)) {
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
-                    }
-                }
-            });
-        });
-    }
-    
-    // Category filter - need to populate from backend data
-    const categoryFilter = document.getElementById('category-filter');
-    if (categoryFilter) {
-        // This would need to be populated with actual categories from your data
-        // For now, we'll add a placeholder
-        if (categoryFilter.children.length <= 1) { // Only has "All Categories"
-            const categories = [
-                'Skincare', 'Makeup', 'Fragrance', 'Hair Care', 'Body Care'
-            ];
-            
-            categories.forEach(cat => {
-                const option = document.createElement('option');
-                option.value = cat.toLowerCase().replace(' ', '-');
-                option.textContent = cat;
-                categoryFilter.appendChild(option);
-            });
-        }
-        
-        categoryFilter.addEventListener('change', function() {
-            const category = this.value;
-            const rows = document.querySelectorAll('tbody tr');
-            
-            rows.forEach(row => {
-                if (!category) {
-                    row.style.display = '';
-                } else {
-                    const categoryCell = row.querySelector('td:nth-child(3)'); // 3rd column is category
-                    if (categoryCell) {
-                        const cellText = categoryCell.textContent.toLowerCase();
-                        if (cellText.includes(category)) {
-                            row.style.display = '';
-                        } else {
-                            row.style.display = 'none';
-                        }
-                    }
-                }
-            });
-        });
-    }
-    
-    // Initialize tooltips
+    // 初始化工具提示
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
+    
+    // 搜索框回车键提交
+    const searchInput = document.querySelector('input[name="search"]');
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('filter-form').submit();
+            }
+        });
+    }
 });
 </script>
 {% endblock %}

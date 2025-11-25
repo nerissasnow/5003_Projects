@@ -2,8 +2,9 @@ from datetime import date, timedelta
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Case, When, Value, IntegerField
+from django.db.models import Case, When, Value, IntegerField, Q
 from django.contrib import messages
+from django.http import Http404
 from .models import CosmeticProduct, Brand, Category
 
 # 核心修改：重写 ListView 的分页逻辑，彻底避免 self.kwargs 依赖
@@ -34,11 +35,50 @@ class CosmeticProductListView(CustomPaginatorListView):
     context_object_name = 'products'
 
     def get_queryset(self):
-        return CosmeticProduct.objects.filter(user=self.request.user).order_by('expiration_date')
+        """获取筛选后的产品列表"""
+        queryset = CosmeticProduct.objects.filter(user=self.request.user)
+        
+        # 获取筛选参数
+        status_filter = self.request.GET.get('status', '')
+        category_filter = self.request.GET.get('category', '')
+        search_query = self.request.GET.get('search', '')
+        
+        # 应用状态筛选
+        if status_filter:
+            today = date.today()
+            if status_filter == 'expired':
+                queryset = queryset.filter(expiration_date__lt=today)
+            elif status_filter == 'urgent':
+                queryset = queryset.filter(
+                    expiration_date__gte=today,
+                    expiration_date__lte=today + timedelta(days=7)
+                )
+            elif status_filter == 'soon':
+                queryset = queryset.filter(
+                    expiration_date__gt=today + timedelta(days=7),
+                    expiration_date__lte=today + timedelta(days=30)
+                )
+            elif status_filter == 'good':
+                queryset = queryset.filter(expiration_date__gt=today + timedelta(days=30))
+        
+        # 应用分类筛选
+        if category_filter:
+            queryset = queryset.filter(category_id=category_filter)
+        
+        # 应用搜索筛选
+        if search_query:
+            queryset = queryset.filter(
+                Q(name__icontains=search_query) |
+                Q(brand__name__icontains=search_query) |
+                Q(category__name__icontains=search_query) |
+                Q(shade__icontains=search_query)
+            )
+        
+        return queryset.order_by('expiration_date')
 
     def get_context_data(self, **kwargs):
         """添加上下文数据"""
-        context = super().get_context_data(** kwargs)
+        context = super().get_context_data(**kwargs)
         user = self.request.user
         
         # 添加各种状态的产品数量统计
@@ -57,6 +97,14 @@ class CosmeticProductListView(CustomPaginatorListView):
         context['good_count'] = all_products.filter(expiration_date__gt=today + timedelta(days=30)).count()
         context['total_count'] = all_products.count()
         context['today'] = today
+        
+        # 添加所有分类用于下拉框
+        context['categories'] = Category.objects.all()
+        
+        # 添加当前筛选参数
+        context['current_status'] = self.request.GET.get('status', '')
+        context['current_category'] = self.request.GET.get('category', '')
+        context['current_search'] = self.request.GET.get('search', '')
         
         return context
 
@@ -140,7 +188,7 @@ class ExpiringProductsView(LoginRequiredMixin, TemplateView):
     template_name = 'myapp/expiring_products.html'
     
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(** kwargs)
+        context = super().get_context_data(**kwargs)
         user = self.request.user
         today = date.today()
         
