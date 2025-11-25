@@ -1,0 +1,15 @@
+<!-- myapp/templates/myapp/login.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>login</title>
+</head>
+<body>
+    <h2>user login</h2>
+    <form method="post">
+        {% csrf_token %}  <!-- 必须添加，防止 CSRF 攻击 -->
+        {{ form.as_p }}   <!-- 自动生成用户名和密码输入框 -->
+        <button type="submit">登录</button>
+    </form>
+</body>
+</html>
