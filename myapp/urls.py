@@ -12,8 +12,7 @@ urlpatterns = [
     path('expiring/', views.ExpiringProductsView.as_view(), name='expiring_products'), 
     path('<int:pk>/delete/', views.CosmeticProductDeleteView.as_view(), name='product_delete'),
     path('<int:pk>/', views.CosmeticProductDetailView.as_view(), name='product_detail_by_id'),
-    # 添加退出登录路由
+    # 认证路由 - 使用新的自定义视图
+    path('login/', views.CustomLoginView.as_view(), name='login'),
     path('logout/', views.CustomLogoutView.as_view(), name='logout'),
-    # 登录路由（如果还没有）
-    path('login/', auth_views.LoginView.as_view(template_name='myapp/login.html'), name='login'),
 ]

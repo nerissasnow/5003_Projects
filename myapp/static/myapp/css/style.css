@@ -4,14 +4,38 @@
     border-radius: 12px;
     font-size: 12px;
     font-weight: bold;
-    color: white;
+    color: #333; /* 改为深灰色，确保可读性 */
 }
 
-.status-good { background-color: #28a745; }
-.status-soon { background-color: #ffc107; color: black; }
-.status-urgent { background-color: #fd7e14; }
-.status-expired { background-color: #dc3545; }
-.status-unknown { background-color: #6c757d; }
+.status-good { 
+    background-color: #d4edda; /* 浅绿色背景 */
+    color: #155724; /* 深绿色文字 */
+    border: 1px solid #c3e6cb;
+}
+
+.status-soon { 
+    background-color: #fff3cd; /* 浅黄色背景 */
+    color: #856404; /* 深黄色文字 */
+    border: 1px solid #ffeaa7;
+}
+
+.status-urgent { 
+    background-color: #f8d7da; /* 浅红色背景 */
+    color: #721c24; /* 深红色文字 */
+    border: 1px solid #f5c6cb;
+}
+
+.status-expired { 
+    background-color: #f8d7da; /* 浅红色背景 */
+    color: #721c24; /* 深红色文字 */
+    border: 1px solid #f5c6cb;
+}
+
+.status-unknown { 
+    background-color: #e2e3e5; /* 浅灰色背景 */
+    color: #383d41; /* 深灰色文字 */
+    border: 1px solid #d6d8db;
+}
 
 .product-card {
     transition: transform 0.2s, box-shadow 0.2s;
@@ -59,6 +83,17 @@
 
 .table-actions {
     white-space: nowrap;
+}
+
+/* 确保表格中的状态列文字颜色 */
+.table td .status-badge {
+    color: #333 !important; /* 覆盖任何可能使文字变白的样式 */
+}
+
+/* 如果状态文字直接显示在td中（没有span包裹） */
+.table td:nth-child(5) { /* Status列通常是第5列 */
+    color: #333 !important;
+    font-weight: 500;
 }
 
 /* Responsive Table */
