@@ -6,6 +6,11 @@ from django.db.models import Case, When, Value, IntegerField, Q
 from django.contrib import messages
 from django.http import Http404
 from .models import CosmeticProduct, Brand, Category
+from django.contrib.auth import logout
+from django.contrib.auth.views import LogoutView
+from django.shortcuts import redirect
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
 
 # 核心修改：重写 ListView 的分页逻辑，彻底避免 self.kwargs 依赖
 class CustomPaginatorListView(LoginRequiredMixin, ListView):
@@ -304,3 +309,14 @@ class ExpiringProductsView(LoginRequiredMixin, TemplateView):
         })
         
         return context
+
+# 添加退出登录视图
+class CustomLogoutView(LogoutView):
+    """自定义退出登录视图"""
+    next_page = 'myapp:login'  # 退出后重定向到登录页面
+    
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        # 添加退出登录的消息
+        messages.info(request, '您已成功退出登录。')
+        return super().dispatch(request, *args, **kwargs)

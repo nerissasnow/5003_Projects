@@ -121,4 +121,6 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-LOGIN_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = '/myapp/'  # 登录成功后重定向的URL
+LOGOUT_REDIRECT_URL = '/myapp/accounts/login/'  # 退出后重定向的URL
+LOGIN_URL = '/myapp/accounts/login/'  # 登录页面的URL
