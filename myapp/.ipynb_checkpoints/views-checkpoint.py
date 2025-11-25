@@ -60,13 +60,34 @@ class CosmeticProductListView(CustomPaginatorListView):
         
         return context
 
-# 以下视图类无需修改，保持原样
 class CosmeticProductDetailView(LoginRequiredMixin, DetailView):
     model = CosmeticProduct
     template_name = 'myapp/product_detail.html'
+    context_object_name = 'product'
     
     def get_queryset(self):
+        """确保用户只能访问自己的产品"""
         return CosmeticProduct.objects.filter(user=self.request.user)
+    
+    def get_object(self, queryset=None):
+        """重写get_object方法添加错误处理"""
+        try:
+            # 调用父类方法获取对象
+            obj = super().get_object(queryset)
+            # 验证对象存在且属于当前用户
+            if obj.user != self.request.user:
+                raise Http404("您没有权限查看此产品")
+            return obj
+        except (CosmeticProduct.DoesNotExist, ValueError):
+            raise Http404("产品不存在")
+    
+    def get_context_data(self, **kwargs):
+        """添加上下文数据"""
+        context = super().get_context_data(**kwargs)
+        # 添加调试信息
+        product = self.get_object()
+        context['debug_product_id'] = product.id if product else 'None'
+        return context
 
 class CosmeticProductCreateView(LoginRequiredMixin, CreateView):
     model = CosmeticProduct
