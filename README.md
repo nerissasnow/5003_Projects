@@ -65,13 +65,21 @@ Project Structure
 
 
 cosmetic-management-system/
+
 ├── cosmetic_manager/     # Django project configuration
+
 ├── myapp/               # Main application
+
 │   ├── models.py        # Data models
+
 │   ├── views.py         # View logic
+
 │   ├── urls.py          # URL routing
+
 │   └── templates/       # Frontend templates
+
 ├── static/              # Static assets
+
 └── manage.py           # Management script
 
 
