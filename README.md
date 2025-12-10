@@ -1,209 +1,90 @@
-Cosmetic Management System
+# Cosmetic Product Management System
 
+Full-stack Django application for tracking cosmetic inventories, monitoring expiry status, and analyzing usage patterns. Built for SDSC5003 Track 1: Database Application Development.
 
-A Django-based cosmetic inventory management system that helps users effectively manage personal cosmetics, track product expiration dates, and avoid waste.
+## Features
 
-Features
+- **Inventory Management:** CRUD operations for brands, categories, and cosmetic products with image uploads and user ownership.
+- **Expiration Analytics:** Automatic status calculation (`good/soon/urgent/expired`) plus expiring-products dashboard.
+- **Advanced Filtering:** Search by keyword, status, and category with server-side pagination (10 rows per page).
+- **Multi-User Isolation:** Authentication-enforced views; each user only sees their own data.
+- **Diagnostics & Demo Scripts:** `create_sample_data.py`, `debug_frontend.py`, `demo_commands.sh`, and SQL examples at `docs/sql.md`.
 
-• Full Product Lifecycle Management - Add, edit, delete cosmetic products
+## Architecture Overview
 
-• Smart Expiration Alerts - 4-level warning system (Good/Soon/Urgent/Expired)
+| Layer    | Description                                                  |
+| -------- | ------------------------------------------------------------ |
+| Frontend | Django Templates + Bootstrap 5 + Font Awesome; static files in `myapp/static`. |
+| Backend  | Django 5.2.8 class-based views (`CosmeticProductListView`, `Create/Update/Delete`, `ExpiringProductsView`), custom paginator, messages framework. |
+| Database | SQLite (`db.sqlite3`) with models Brand, Category, CosmeticProduct, UsageLog; indexed on `(expiration_date, status)` and `(brand, category)`. |
+| Scripts  | `create_sample_data.py` (seed), `debug_frontend.py` (view introspection), `demo_commands.sh` (run pip + server). |
 
-• Multi-dimensional Classification - Organize by brand, category, status
+## Project Layout
 
-• Data Analytics - Inventory statistics and expiration trends
+```
+5003_Projects-main/
+├── manage.py                # Django entry point
+├── myproject/               # Project configuration (settings, urls, wsgi)
+├── myapp/                   # Business logic (models, views, urls, templates, static)
+├── docs/                    # AGENTS.md, demo outline, scripts, SQL, report requirements
+├── SDSC5003_Report/         # LaTeX sources and diagrams
+├── create_sample_data.py    # Seed data script
+├── debug_frontend.py        # Diagnostics for list view and template context
+├── demo_commands.sh         # Interactive CLI helper (pip install + runserver)
+└── requirements.txt         # Python dependencies
+```
 
-• Multi-user Support - User data isolation and security
+## Prerequisites
 
-• Responsive Design - Desktop and mobile support
+- Python 3.13 (Anaconda environment works).
+- pip / virtualenv recommended.
+- SQLite (bundled with Python).
 
-• Single-File Distribution - Packaged as standalone executable
+## Installation & Setup
 
-Quick Start
+```bash
+git clone https://github.com/nerissasnow/5003_Projects.git
+cd 5003_Projects-main
 
-Prerequisites
+# (Optional) create virtual environment
+python -m venv .venv
+source .venv/bin/activate
 
-• Python 3.8+
-
-• Django 4.2+
-
-• SQLite/PostgreSQL
-
-Installation Steps
-
-1. Clone Repository
-git clone https://github.com/yourusername/cosmetic-management-system.git
-cd cosmetic-management-system
-
-
-2. Install Dependencies
+# Install dependencies
 pip install -r requirements.txt
 
-
-3. Database Migration
+# Run database migrations
 python manage.py migrate
 
+# Load sample data (creates test user `testuser` with sample cosmetics)
+python create_sample_data.py
+```
 
-4. Create Superuser
-python manage.py createsuperuser
+## Running the Application
 
+### Option A: Manual commands
 
-5. Start Development Server
-python manage.py runserver
+```bash
+python manage.py runserver 127.0.0.1:8000
+```
 
+Access `http://127.0.0.1:8000/myapp/login/` and log in with seeded credentials (see seed script output). Use the navbar to navigate Product List, Add Product, and Expiring Soon pages.
 
-6. Access System
-Open browser and visit: http://127.0.0.1:8000
+### Option B: Interactive helper script
 
-Default Account
+```bash
+chmod +x demo_commands.sh
+./demo_commands.sh
+```
 
-• Username: liyifei
+Press Enter when prompted to execute `pip install -r requirements.txt` and `python manage.py runserver`. The script writes the server PID to `.demo_runserver.pid`; stop it via `kill $(cat .demo_runserver.pid) && rm .demo_runserver.pid`.
 
-• Password: 123456
+## Diagnostics
 
-Project Structure
+- `debug_frontend.py`: inspects the list view QuerySet and context (useful when UI shows no rows).
 
+## Testing Notes
 
-cosmetic-management-system/
-
-├── cosmetic_manager/     # Django project configuration
-
-├── myapp/               # Main application
-
-│   ├── models.py        # Data models
-
-│   ├── views.py         # View logic
-
-│   ├── urls.py          # URL routing
-
-│   └── templates/       # Frontend templates
-
-├── static/              # Static assets
-
-└── manage.py           # Management script
-
-
-Data Models
-
-The system includes these core data models:
-
-• User - System user management
-
-• Brand - Cosmetic brand information
-
-• Category - Product categorization system
-
-• CosmeticProduct - Core product data
-
-• UsageLog - Product usage history
-
-Database Design Features
-
-• Third Normal Form - Minimal data redundancy
-
-• Composite Index Optimization - Query performance optimization
-
-• Data Integrity Constraints - Business rule enforcement
-
-• Clear Foreign Key Relationships - Proper data associations
-
-Development Guide
-
-Environment Setup
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# venv\Scripts\activate    # Windows
-
-# Install development dependencies
-pip install -r requirements.txt
-
-
-Running Tests
-
-python manage.py test myapp
-
-
-Code Style
-
-# Code formatting
-black .
-flake8 .
-
-
-Packaging & Distribution
-
-Single-File Packaging (Recommended)
-
-# Package with PyInstaller
-pyinstaller --onefile run.py
-
-# Packaged files located in dist/ directory
-
-
-Multi-Platform Support
-
-• Windows: .exe executable
-
-• macOS: Unix executable
-
-• Linux: Universal executable
-
-🔧 Configuration
-
-Database Configuration
-
-Uses SQLite by default, PostgreSQL recommended for production:
-# settings.py
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'cosmetic_db',
-        'USER': 'your_username',
-        'PASSWORD': 'your_password',
-        'HOST': 'localhost',
-        'PORT': '5432',
-    }
-}
-
-
-Static Files Configuration
-
-# Development
-STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']
-
-# Production
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-
-
-API Endpoints
-
-RESTful API endpoints available:
-
-Endpoint Method Description
-
-/api/products/ GET, POST Product list/create
-
-/api/products/{id}/ GET, PUT, DELETE Product detail/update/delete
-
-/api/categories/ GET Category list
-
-/api/expiring/ GET Expiring products
-
-Troubleshooting
-
-Common Issues
-
-Q: Static files not loading
-python manage.py collectstatic
-
-
-Q: Database migration fails
-python manage.py makemigrations
-python manage.py migrate
-
-
-Q: Port already in use
-python manage.py runserver 8001
+- Django messages and login/logout flows are protected via `LOGIN_URL`, `LOGIN_REDIRECT_URL`, `LOGOUT_REDIRECT_URL` in `myproject/settings.py`.
+- File uploads (product images) require configuring `MEDIA_ROOT`/`MEDIA_URL` before deployment.
+- For production, switch `DEBUG=False`, configure allowed hosts, and migrate to PostgreSQL if high concurrency is expected.
